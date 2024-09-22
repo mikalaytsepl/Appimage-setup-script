@@ -5,7 +5,7 @@ getname(){
     basename "$1" .AppImage | grep -oP "^.+?((?=\.)|$)"
 }
 
-# firstly get the file type then extract its name 
+
 getpicname(){
     basename "$1"
 }
@@ -19,11 +19,20 @@ make_app_dir(){
 
 # Create a .desktop file
 make_desktop(){
+    #checking block,because sometimes there is no applications directory for 
+    #local user 
+
+    if ! [ -d "$HOME/.local/share/applications/" ]; then
+        mkdir "$HOME/.local/share/applications/"
+        chmod 700 "$HOME/.local/share/applications/"
+    fi
+
+
     APPNAME=$(getname "$1")
     ICONNAME=$(getpicname "$2")
     # make iconname with extension
     APPDIR="$HOME/$APPNAME"
-    DESKTOP_FILE="/usr/share/applications/$APPNAME.desktop"
+    DESKTOP_FILE="$HOME/.local/share/applications/$APPNAME.desktop"
 
     echo "[Desktop Entry]
     Name=$APPNAME
@@ -37,7 +46,7 @@ make_desktop(){
 
 # Setup the application
 install(){
-    chmod +x "$1" && chmod +x "$2" # making files executable b4 mowing them cause it would be to much of a hustle later
+    chmod +x "$1" && chmod +x "$2" # making files executable b4 moving them cause it would be to much of a hustle later
     make_app_dir "$1" "$2"
     make_desktop "$1" "$2"
 }
@@ -45,10 +54,10 @@ install(){
 # uninstall function
 
 uninstall(){
-	APPNAME=$(getname "$1")
-	rm -fr  -i "$HOME/$APPNAME"
-	rm -i "$HOME/.local/share/applications/$APPNAME.desktop"
-	echo "Application $APPNAME has been succesfully uninstalled, you now can remove it's icon from the panel."
+    APPNAME=$(getname "$1")
+    rm -fr  -i "$HOME/$APPNAME"
+    rm -i "$HOME/.local/share/applications/$APPNAME.desktop"
+    echo "Application $APPNAME has been succesfully uninstalled, you now can remove it's icon from the panel."
 } 
 
 
