@@ -23,7 +23,7 @@ make_desktop(){
     ICONNAME=$(getpicname "$2")
     # make iconname with extension
     APPDIR="$HOME/$APPNAME"
-    DESKTOP_FILE="$HOME/.local/share/applications/$APPNAME.desktop"
+    DESKTOP_FILE="/usr/share/applications/$APPNAME.desktop"
 
     echo "[Desktop Entry]
 Name=$APPNAME
@@ -32,7 +32,7 @@ Icon=$APPDIR/$ICONNAME
 Type=Application
 Categories=Application;Utility;" > "$DESKTOP_FILE"
 
-    chmod +x "$DESKTOP_FILE"
+    chmod 644 "$DESKTOP_FILE"
 }
 
 # Setup the application
