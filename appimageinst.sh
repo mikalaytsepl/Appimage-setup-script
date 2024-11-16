@@ -26,11 +26,11 @@ make_desktop(){
     DESKTOP_FILE="/usr/share/applications/$APPNAME.desktop"
 
     echo "[Desktop Entry]
-Name=$APPNAME
-Exec=$APPDIR/$(basename "$1")
-Icon=$APPDIR/$ICONNAME
-Type=Application
-Categories=Application;Utility;" > "$DESKTOP_FILE"
+    Name=$APPNAME
+    Exec=$APPDIR/$(basename "$1")
+    Icon=$APPDIR/$ICONNAME
+    Type=Application
+    Categories=Application;Utility;" > "$DESKTOP_FILE"
 
     chmod 644 "$DESKTOP_FILE"
 }
