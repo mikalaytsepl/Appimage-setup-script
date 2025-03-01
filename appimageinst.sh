@@ -1,92 +1,113 @@
 #!/bin/bash
 
+# Default icon path (modify if necessary)
+DEFAULT_ICON="$HOME/.Appimage-setup-script/question-icon.svg"
+
 # Get the base name without the .AppImage extension
 getname(){
-    basename "$1" .AppImage | grep -oP "^.+?((?=\.)|$)"
+    basename "$1" .AppImage | cut -d. -f1
 }
-
 
 getpicname(){
     basename "$1"
 }
 
-# Create a directory for the appimg file and icon and get them there
+# Create a directory for the AppImage and its icon
 make_app_dir(){
-    mkdir -p "$HOME/$(getname "$1")"
-    mv "$1" "$HOME/$(getname "$1")"
-    mv "$2" "$HOME/$(getname "$1")"
+    local APPNAME ICONNAME
+    APPNAME=$(getname "$1")
+    ICONNAME=$(basename "$2")
+
+    mkdir -p "$HOME/$APPNAME"
+
+    mv "$1" "$HOME/$APPNAME"
+
+    if [[ "$ICONNAME" == "question-icon.svg" ]]; then
+        cp "$DEFAULT_ICON" "$HOME/$APPNAME/question-icon.svg"
+    else
+        mv "$2" "$HOME/$APPNAME"
+    fi
 }
 
 # Create a .desktop file
 make_desktop(){
-    #checking block,because sometimes there is no applications directory for 
-    #local user 
-
-    if ! [ -d "$HOME/.local/share/applications/" ]; then
-        mkdir "$HOME/.local/share/applications/"
-        chmod 700 "$HOME/.local/share/applications/"
-    fi
-
-
+    local APPNAME ICONNAME APPDIR DESKTOP_FILE
     APPNAME=$(getname "$1")
-    ICONNAME=$(getpicname "$2")
-    # make iconname with extension
+    ICONNAME=$(basename "$2")
     APPDIR="$HOME/$APPNAME"
     DESKTOP_FILE="$HOME/.local/share/applications/$APPNAME.desktop"
 
-    echo "[Desktop Entry]
-    Name=$APPNAME
-    Exec=$APPDIR/$(basename "$1")
-    Icon=$APPDIR/$ICONNAME
-    Type=Application
-    Categories=Application;Utility;" > "$DESKTOP_FILE"
+    # Ensure applications directory exists
+    mkdir -p "$HOME/.local/share/applications/"
+
+    echo "
+        [Desktop Entry]
+        Name=$APPNAME
+        Exec=$APPDIR/$(basename "$1")
+        Icon=$APPDIR/$ICONNAME
+        Type=Application
+        Terminal=false
+        Categories=Application;Utility;
+    " > $DESKTOP_FILE
 
     chmod 644 "$DESKTOP_FILE"
 }
 
 # Setup the application
 install(){
-    chmod +x "$1" && chmod +x "$2" # making files executable b4 moving them cause it would be to much of a hustle later
-    make_app_dir "$1" "$2"
-    make_desktop "$1" "$2"
+    local APPIMAGE ICON
+    APPIMAGE="$1"
+    ICON="$2"
+
+    chmod +x "$APPIMAGE" 
+    make_app_dir "$APPIMAGE" "$ICON"
+    make_desktop "$APPIMAGE" "$ICON"
 }
 
-# uninstall function
-
+# Uninstall function
 uninstall(){
+    local APPNAME
     APPNAME=$(getname "$1")
-    rm -fr  -i "$HOME/$APPNAME"
-    rm -i "$HOME/.local/share/applications/$APPNAME.desktop"
-    echo "Application $APPNAME has been succesfully uninstalled, you now can remove it's icon from the panel."
-} 
 
+    rm -rf "$HOME/$APPNAME"
+    rm -f "$HOME/.local/share/applications/$APPNAME.desktop"
 
+    echo "Application $APPNAME has been successfully uninstalled. You may remove its icon from the panel."
+}
+
+# Argument parsing
 while getopts "i:u:h" flag; do
-
-    case $flag in
-
+    case "$flag" in
         h)
-            echo "The AppImageInstaller is a script which helps with setting up and uninstalling .AppImage applications,"
-            echo "making icons for ease of use."
+            echo "The AppImageInstaller helps with setting up and uninstalling .AppImage applications."
             echo
             echo "Usage:"
-            echo
             echo "-h                          Display help message"
             echo "-i [app/path] [icon/path]   Set up application and make .desktop launcher"
             echo "-u [appname]                Delete application’s file, icon, directory and launcher files"
+            exit 0
         ;;
 
         i)
-            install $2 $3
+            APPNAME=$(getname "$2")
+
+            if [ -f "$3" ]; then
+                ICONNAME="$3"
+            else
+                echo "Icon was not provided, using default icon."
+                ICONNAME="$DEFAULT_ICON"
+            fi
+
+            install "$2" "$ICONNAME"
         ;;
 
         u)
-            uninstall $2 
+            uninstall "$2"
         ;;
 
         \?)
-            echo "Invalid option/flag has been provided, exiting"
+            echo "Invalid option provided. Exiting."
+            exit 1
         ;;
     esac
-
-done;
+done
