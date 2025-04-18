@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Default icon path (modify if necessary)
-DEFAULT_ICON="$HOME/.Appimage-setup-script/question-icon.svg"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_ICON="$SCRIPT_DIR/question-mark.svg"
 
 # Get the base name without the .AppImage extension
 getname(){
@@ -22,8 +23,8 @@ make_app_dir(){
 
     mv "$1" "$HOME/$APPNAME"
 
-    if [[ "$ICONNAME" == "question-icon.svg" ]]; then
-        cp "$DEFAULT_ICON" "$HOME/$APPNAME/question-icon.svg"
+    if [[ "$ICONNAME" == "default" ]]; then
+        cp "$DEFAULT_ICON" "$HOME/$APPNAME/question-mark.svg"
     else
         mv "$2" "$HOME/$APPNAME"
     fi
@@ -40,15 +41,16 @@ make_desktop(){
     # Ensure applications directory exists
     mkdir -p "$HOME/.local/share/applications/"
 
-    echo "
-        [Desktop Entry]
-        Name=$APPNAME
-        Exec=$APPDIR/$(basename "$1")
-        Icon=$APPDIR/$ICONNAME
-        Type=Application
-        Terminal=false
-        Categories=Application;Utility;
-    " > $DESKTOP_FILE
+    cat > "$DESKTOP_FILE" <<EOF
+[Desktop Entry]
+Name=$APPNAME
+Exec=$APPDIR/$(basename "$1")
+Icon=$APPDIR/$ICONNAME
+Type=Application
+Terminal=false
+Categories=Application;Utility;
+EOF
+
 
     chmod 644 "$DESKTOP_FILE"
 }
@@ -84,7 +86,7 @@ while getopts "i:u:h" flag; do
             echo "Usage:"
             echo "-h                          Display help message"
             echo "-i [app/path] [icon/path]   Set up application and make .desktop launcher"
-            echo "-u [appname]                Delete application’s file, icon, directory and launcher files"
+            echo "-u [appname]                Delete applications file, icon, directory and launcher files"
             exit 0
         ;;
 
@@ -95,7 +97,7 @@ while getopts "i:u:h" flag; do
                 ICONNAME="$3"
             else
                 echo "Icon was not provided, using default icon."
-                ICONNAME="$DEFAULT_ICON"
+                ICONNAME="default"
             fi
 
             install "$2" "$ICONNAME"
